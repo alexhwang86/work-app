@@ -1,0 +1,913 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="default"/>
+<meta name="apple-mobile-web-app-title" content="작업관리"/>
+<title>작업 관리 앱</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css"/>
+<style>
+:root {
+  --bg: #ffffff;
+  --bg2: #f5f5f7;
+  --bg3: #ebebed;
+  --text: #1d1d1f;
+  --text2: #6e6e73;
+  --text3: #aeaeb2;
+  --border: #d2d2d7;
+  --border2: #e5e5ea;
+  --accent: #534AB7;
+  --accent-bg: #EEEDFE;
+  --accent-border: #AFA9EC;
+  --accent-text: #3C3489;
+  --green-bg: #E1F5EE;
+  --green-text: #085041;
+  --red-bg: #FCEBEB;
+  --red-text: #791F1F;
+  --radius: 10px;
+  --radius-sm: 6px;
+  --radius-lg: 14px;
+}
+@media(prefers-color-scheme:dark){
+  :root{
+    --bg:#1c1c1e;--bg2:#2c2c2e;--bg3:#3a3a3c;
+    --text:#f2f2f7;--text2:#aeaeb2;--text3:#636366;
+    --border:#3a3a3c;--border2:#2c2c2e;
+    --accent:#7F77DD;--accent-bg:#2d2b4e;--accent-border:#534AB7;--accent-text:#a9a3f5;
+    --green-bg:#0d2e24;--green-text:#34d399;
+    --red-bg:#2e1515;--red-text:#f87171;
+  }
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg2);color:var(--text);font-size:14px;min-height:100vh}
+.app-shell{max-width:760px;margin:0 auto;min-height:100vh;background:var(--bg);display:flex;flex-direction:column}
+
+/* NAV */
+.main-nav{display:flex;background:var(--bg);border-bottom:0.5px solid var(--border2);overflow-x:auto;scrollbar-width:none}
+.main-nav::-webkit-scrollbar{display:none}
+.main-nav button{flex-shrink:0;height:48px;padding:0 18px;border:none;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;display:flex;align-items:center;gap:5px;white-space:nowrap}
+.main-nav button.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:600}
+.main-nav button:hover:not(.active){color:var(--text)}
+.page{display:none;flex:1;padding:1rem}
+.page.active{display:block}
+
+/* SECTION HEADER */
+.sec-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;gap:8px}
+
+/* TABS inside page */
+.tab-bar{display:flex;gap:2px;border-bottom:0.5px solid var(--border2);margin-bottom:1rem}
+.tab{height:34px;padding:0 14px;border:none;background:transparent;color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent;margin-bottom:-1px;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+.tab:hover:not(.active){color:var(--text)}
+.subview{display:none}.subview.active{display:block}
+
+/* CARDS */
+.card{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:1.1rem;margin-bottom:.85rem}
+.section-card{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);overflow:hidden;margin-bottom:.85rem}
+.section-head{padding:9px 14px;background:var(--bg2);border-bottom:0.5px solid var(--border2);font-size:13px;font-weight:500;color:var(--text)}
+
+/* FORM */
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.full{grid-column:1/-1}
+.field{display:flex;flex-direction:column;gap:4px}
+.field label{font-size:12px;color:var(--text2);font-weight:500;display:flex;align-items:center;gap:4px}
+.field select,.field input[type=text],.field input[type=date]{height:38px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);padding:0 10px;font-size:13px;outline:none;font-family:inherit;width:100%}
+.field select:focus,.field input:focus{border-color:var(--accent-border);box-shadow:0 0 0 2px rgba(83,74,183,0.12)}
+.time-row{display:grid;grid-template-columns:1fr 20px 1fr;gap:4px;align-items:end}
+.time-sep{text-align:center;font-size:13px;color:var(--text3);padding-bottom:9px}
+.worker-pills{display:flex;flex-wrap:wrap;gap:5px;padding:6px 8px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);min-height:38px}
+.wpill{display:inline-flex;align-items:center;padding:3px 11px;border-radius:20px;font-size:12px;cursor:pointer;user-select:none;border:0.5px solid var(--border);background:var(--bg);color:var(--text2);transition:all .15s}
+.wpill.sel{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent-text);font-weight:500}
+.btn-row{display:flex;justify-content:flex-end;gap:8px;margin-top:4px}
+.btn{height:36px;padding:0 14px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;font-family:inherit}
+.btn:hover{background:var(--bg2)}
+.btn-primary{background:var(--accent-bg);border-color:var(--accent-border);color:var(--accent-text);font-weight:500}
+.btn-primary:hover{background:#dddaf8}
+.btn-danger{background:var(--red-bg);border-color:#ECA9A9;color:var(--red-text)}
+.btn-sm{height:28px;padding:0 10px;font-size:12px}
+
+/* BADGES */
+.badge{display:inline-block;font-size:11px;padding:2px 9px;border-radius:20px;font-weight:500}
+.badge-work{background:var(--accent-bg);color:var(--accent-text)}
+.badge-qty{background:var(--green-bg);color:var(--green-text)}
+.badge-up{background:#EAF3DE;color:#27500A}
+.badge-down{background:var(--red-bg);color:var(--red-text)}
+.badge-same{background:var(--bg2);color:var(--text3);border:0.5px solid var(--border)}
+
+/* LIST */
+.filter-row{display:flex;gap:6px;margin-bottom:.75rem;flex-wrap:wrap}
+.filter-row select,.filter-row input{height:32px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);padding:0 8px;font-size:12px;outline:none;font-family:inherit}
+.filter-row input{flex:1;min-width:120px}
+.log-list{display:flex;flex-direction:column;gap:6px}
+.log-item{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius);padding:10px 12px}
+.log-top{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+.log-actions{display:flex;gap:3px;flex-shrink:0}
+.icon-btn{width:28px;height:28px;border-radius:var(--radius-sm);border:none;background:transparent;cursor:pointer;color:var(--text3);display:inline-flex;align-items:center;justify-content:center;font-size:15px}
+.icon-btn:hover{background:var(--bg2);color:var(--text)}
+.icon-btn.del:hover{background:var(--red-bg);color:var(--red-text)}
+.log-meta{display:flex;gap:8px;flex-wrap:wrap;margin-top:5px}
+.meta-chip{display:inline-flex;align-items:center;gap:3px;font-size:11px;color:var(--text2)}
+
+/* WEEKLY */
+.week-nav-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem}
+.week-nav-btns{display:flex;gap:5px}
+.week-nav-btns button{height:30px;padding:0 10px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:var(--bg);color:var(--text);font-size:12px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-family:inherit}
+.week-nav-btns button:hover{background:var(--bg2)}
+.week-lbl{font-size:14px;font-weight:600;color:var(--text)}
+.day-section{margin-bottom:6px;border:0.5px solid var(--border2);border-radius:var(--radius);overflow:hidden}
+.day-section-head{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;background:var(--bg2);border-bottom:0.5px solid var(--border2)}
+.day-section-head.today{background:var(--accent-bg)}
+.day-section-head.today .dsday{color:var(--accent-text)}
+.day-section-head.sunday .dsday{color:#c0392b}
+.day-section-head.saturday .dsday{color:#2980b9}
+.dsday{font-size:13px;font-weight:500;color:var(--text)}
+.dscount{font-size:11px;color:var(--text3)}
+.day-section-body{padding:6px 10px;display:flex;flex-direction:column;gap:3px}
+.day-log-row{display:flex;align-items:center;gap:6px;padding:4px 6px;border-radius:6px;font-size:12px}
+.day-log-row:hover{background:var(--bg2)}
+
+/* STATS */
+.stat-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:.85rem}
+.stat-card{background:var(--bg2);border-radius:var(--radius);padding:10px 12px;text-align:center}
+.stat-num{font-size:20px;font-weight:600;color:var(--text)}
+.stat-lbl{font-size:11px;color:var(--text2);margin-top:2px}
+.stats-table{width:100%;border-collapse:collapse;font-size:12px}
+.stats-table th{text-align:left;padding:6px 10px;font-size:11px;font-weight:500;color:var(--text2);border-bottom:0.5px solid var(--border2);background:var(--bg2)}
+.stats-table td{padding:7px 10px;border-bottom:0.5px solid var(--border2);color:var(--text);vertical-align:middle}
+.stats-table tr:last-child td{border-bottom:none}
+.stats-table tr:hover td{background:var(--bg2)}
+.bar-wrap{display:flex;align-items:center;gap:5px}
+.bar-bg{flex:1;height:5px;border-radius:3px;background:var(--border2);overflow:hidden;min-width:30px}
+.bar-fill{height:100%;border-radius:3px;background:var(--accent)}
+.month-filter-row{display:flex;align-items:center;gap:6px;margin-bottom:.75rem;flex-wrap:wrap}
+.month-filter-row select{height:30px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);padding:0 8px;font-size:12px;outline:none;font-family:inherit}
+
+/* ORDER DIARY */
+.week-grid-v{display:flex;flex-direction:column;gap:6px}
+.order-chip{background:var(--green-bg);border-radius:var(--radius-sm);padding:3px 8px;font-size:11px;color:var(--green-text);display:inline-flex;align-items:center;gap:4px}
+.order-chip button{border:none;background:transparent;cursor:pointer;color:var(--green-text);opacity:.5;font-size:11px;padding:0;display:inline-flex;align-items:center}
+.order-chip button:hover{opacity:1}
+.add-btn-sm{height:26px;padding:0 10px;border:0.5px dashed var(--border);border-radius:var(--radius-sm);background:transparent;color:var(--text3);font-size:11px;cursor:pointer;display:inline-flex;align-items:center;gap:3px;font-family:inherit}
+.add-btn-sm:hover{background:var(--bg2);color:var(--text2)}
+.day-order-body{padding:8px 10px;display:flex;flex-wrap:wrap;gap:5px;align-items:center;min-height:44px}
+.compare-row{display:flex;justify-content:space-between;align-items:center;padding:7px 12px;border-bottom:0.5px solid var(--border2);font-size:12px}
+.compare-row:last-child{border-bottom:none}
+.compare-row:hover{background:var(--bg2)}
+
+/* MODAL */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.45);display:none;align-items:center;justify-content:center;z-index:200;padding:1rem}
+.modal-overlay.open{display:flex}
+.modal-box{background:var(--bg);border:0.5px solid var(--border2);border-radius:var(--radius-lg);padding:1.25rem;width:100%;max-width:440px;max-height:92vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:600;color:var(--text);margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between}
+.mfield{display:flex;flex-direction:column;gap:4px;margin-bottom:10px}
+.mfield label{font-size:12px;color:var(--text2);font-weight:500}
+.mfield select,.mfield input{height:36px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);padding:0 10px;font-size:13px;outline:none;font-family:inherit;width:100%}
+.mfield select:focus,.mfield input:focus{border-color:var(--accent-border)}
+.mgr-item-row{display:flex;align-items:center;justify-content:space-between;padding:6px 0;border-bottom:0.5px solid var(--border2);font-size:13px}
+.mgr-item-row:last-child{border-bottom:none}
+.mgr-add-row{display:flex;gap:6px;margin-top:8px}
+.mgr-add-row input{flex:1;height:34px;border:0.5px solid var(--border);border-radius:var(--radius-sm);background:var(--bg2);color:var(--text);padding:0 8px;font-size:13px;outline:none;font-family:inherit}
+.mgr-add-row button{height:34px;padding:0 12px;border-radius:var(--radius-sm);border:0.5px solid var(--border);background:var(--bg);color:var(--text);font-size:13px;cursor:pointer;font-family:inherit}
+.mgr-add-row button:hover{background:var(--bg2)}
+
+/* TOAST */
+#toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;padding:8px 20px;border-radius:20px;font-size:13px;z-index:999;opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--text3);font-size:13px}
+
+@media(max-width:480px){
+  .form-grid{grid-template-columns:1fr}
+  .full{grid-column:1}
+  .stat-cards{grid-template-columns:repeat(3,1fr)}
+  .stat-num{font-size:16px}
+  .main-nav button{padding:0 12px;font-size:12px}
+}
+</style>
+</head>
+<body>
+<div class="app-shell">
+  <nav class="main-nav">
+    <button class="active" onclick="switchPage('worklog')"><i class="ti ti-clipboard-list"></i> 작업기록</button>
+    <button onclick="switchPage('orders')"><i class="ti ti-calendar-week"></i> 오더다이어리</button>
+  </nav>
+
+  <!-- ========== PAGE: WORK LOG ========== -->
+  <div id="page-worklog" class="page active">
+    <div class="tab-bar">
+      <button class="tab active" onclick="wlTab('input')">기록 입력</button>
+      <button class="tab" onclick="wlTab('list')">기록 목록</button>
+      <button class="tab" onclick="wlTab('weekly')">요일별</button>
+      <button class="tab" onclick="wlTab('stats')">통계</button>
+    </div>
+
+    <!-- INPUT -->
+    <div id="wl-input" class="subview active">
+      <div class="card">
+        <div class="form-grid">
+          <div class="field"><label>📅 작업 날짜</label><input type="date" id="f-date"/></div>
+          <div class="field">
+            <label>🏷️ 작업 종류 <button class="btn btn-sm" style="margin-left:4px" onclick="openMgr('work')">관리</button></label>
+            <select id="f-work"></select>
+          </div>
+          <div class="field full">
+            <label>👷 작업자 (여러 명 선택) <button class="btn btn-sm" style="margin-left:4px" onclick="openMgr('worker')">관리</button></label>
+            <div class="worker-pills" id="worker-pills"></div>
+          </div>
+          <div class="field full">
+            <label>⏰ 작업 시간</label>
+            <div class="time-row">
+              <div class="field"><label style="font-size:11px;color:var(--text3)">시작</label><select id="f-start"></select></div>
+              <div class="time-sep">→</div>
+              <div class="field"><label style="font-size:11px;color:var(--text3)">종료</label><select id="f-end"></select></div>
+            </div>
+          </div>
+          <div class="field"><label>📦 수량</label><input type="text" id="f-qty" placeholder="예: 50개, 10kg..."/></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn" onclick="wlClearForm()">초기화</button>
+          <button class="btn btn-primary" onclick="wlAddLog()"><i class="ti ti-plus"></i> 기록 추가</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- LIST -->
+    <div id="wl-list" class="subview">
+      <div class="filter-row">
+        <input type="text" id="wl-search" placeholder="작업자 또는 종류 검색..." oninput="wlRenderList()"/>
+        <select id="wl-filter-work" onchange="wlRenderList()"><option value="">전체 작업</option></select>
+        <select id="wl-sort" onchange="wlRenderList()">
+          <option value="newest">최신순</option>
+          <option value="oldest">오래된순</option>
+          <option value="worker">작업자순</option>
+        </select>
+      </div>
+      <div id="wl-log-list" class="log-list"></div>
+    </div>
+
+    <!-- WEEKLY -->
+    <div id="wl-weekly" class="subview">
+      <div class="week-nav-row">
+        <span class="week-lbl" id="wl-week-label"></span>
+        <div class="week-nav-btns">
+          <button onclick="wlShiftWeek(-1)"><i class="ti ti-chevron-left"></i></button>
+          <button onclick="wlGoToday()">오늘</button>
+          <button onclick="wlShiftWeek(1)"><i class="ti ti-chevron-right"></i></button>
+        </div>
+      </div>
+      <div id="wl-weekly-grid"></div>
+    </div>
+
+    <!-- STATS -->
+    <div id="wl-stats" class="subview">
+      <div class="month-filter-row">
+        <span style="font-size:12px;color:var(--text2)">기간:</span>
+        <select id="wl-stats-month" onchange="wlRenderStats()"><option value="all">전체</option></select>
+      </div>
+      <div class="stat-cards" id="wl-stat-cards"></div>
+      <div class="section-card">
+        <div class="section-head">작업 종류별 소요 시간 & 평균</div>
+        <table class="stats-table"><thead><tr><th>작업 종류</th><th>건수</th><th>총 시간</th><th>평균</th><th>비율</th></tr></thead>
+        <tbody id="wl-work-tbody"></tbody></table>
+      </div>
+      <div class="section-card">
+        <div class="section-head">작업자별 통계 (1인당 작업량)</div>
+        <table class="stats-table"><thead><tr><th>작업자</th><th>참여 건수</th><th>총 시간</th><th>평균/건</th><th>수량</th></tr></thead>
+        <tbody id="wl-worker-tbody"></tbody></table>
+      </div>
+      <div class="section-card">
+        <div class="section-head">요일별 작업 분포</div>
+        <table class="stats-table"><thead><tr><th>요일</th><th>건수</th><th>총 시간</th><th>비율</th></tr></thead>
+        <tbody id="wl-day-tbody"></tbody></table>
+      </div>
+    </div>
+  </div>
+
+  <!-- ========== PAGE: ORDER DIARY ========== -->
+  <div id="page-orders" class="page">
+    <div class="tab-bar">
+      <button class="tab active" onclick="odTab('diary')">주간 다이어리</button>
+      <button class="tab" onclick="odTab('stats')">월별 통계</button>
+      <button class="tab" onclick="odTab('compare')">월별 비교</button>
+    </div>
+
+    <!-- DIARY -->
+    <div id="od-diary" class="subview active">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.75rem;flex-wrap:wrap;gap:6px">
+        <div class="week-nav-btns">
+          <button onclick="odShiftWeek(-1)"><i class="ti ti-chevron-left"></i> 이전</button>
+          <button onclick="odGoToday()">오늘</button>
+          <button onclick="odShiftWeek(1)">다음 <i class="ti ti-chevron-right"></i></button>
+        </div>
+        <span class="week-lbl" id="od-week-label"></span>
+        <button class="btn btn-sm" onclick="openClientMgr()"><i class="ti ti-settings"></i> 거래처 관리</button>
+      </div>
+      <div id="od-week-grid" class="week-grid-v"></div>
+    </div>
+
+    <!-- STATS -->
+    <div id="od-stats" class="subview">
+      <div class="month-filter-row">
+        <button class="btn btn-sm" onclick="odShiftStatsMonth(-1)"><i class="ti ti-chevron-left"></i></button>
+        <span id="od-stats-month-label" style="font-size:14px;font-weight:600;min-width:80px;text-align:center"></span>
+        <button class="btn btn-sm" onclick="odShiftStatsMonth(1)"><i class="ti ti-chevron-right"></i></button>
+      </div>
+      <div class="stat-cards" id="od-stat-cards"></div>
+      <div class="section-card">
+        <div class="section-head">거래처별 오더 현황</div>
+        <table class="stats-table"><thead><tr><th>거래처</th><th>오더</th><th>비율</th><th>전월 대비</th></tr></thead>
+        <tbody id="od-client-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- COMPARE -->
+    <div id="od-compare" class="subview">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:1rem">
+        <div class="mfield"><label>기준 월</label><select id="cmp-a" onchange="odRenderCompare()"></select></div>
+        <div class="mfield"><label>비교 월</label><select id="cmp-b" onchange="odRenderCompare()"></select></div>
+      </div>
+      <div id="od-compare-content"></div>
+    </div>
+  </div>
+</div>
+
+<!-- EDIT LOG MODAL -->
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-box">
+    <div class="modal-title">기록 수정 <button class="icon-btn" onclick="closeEdit()"><i class="ti ti-x"></i></button></div>
+    <div class="mfield"><label>작업 날짜</label><input type="date" id="e-date"/></div>
+    <div class="mfield"><label>작업 종류</label><select id="e-work"></select></div>
+    <div class="mfield"><label>작업자 (여러 명 선택)</label><div class="worker-pills" id="edit-worker-pills"></div></div>
+    <div class="mfield"><label>시작 시간</label><select id="e-start"></select></div>
+    <div class="mfield"><label>종료 시간</label><select id="e-end"></select></div>
+    <div class="mfield"><label>수량</label><input type="text" id="e-qty" placeholder="예: 50개, 10kg..."/></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button class="btn" onclick="closeEdit()">취소</button>
+      <button class="btn btn-primary" onclick="saveEdit()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANAGE (worker/work) MODAL -->
+<div class="modal-overlay" id="mgr-modal">
+  <div class="modal-box">
+    <div class="modal-title" id="mgr-title">관리 <button class="icon-btn" onclick="closeMgr()"><i class="ti ti-x"></i></button></div>
+    <div id="mgr-list"></div>
+    <div class="mgr-add-row">
+      <input type="text" id="mgr-input" placeholder="새 항목 입력"/>
+      <button onclick="mgrAdd()">추가</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-primary" onclick="closeMgr()">완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- ORDER ADD MODAL -->
+<div class="modal-overlay" id="order-modal">
+  <div class="modal-box">
+    <div class="modal-title"><span id="order-modal-title"></span><button class="icon-btn" onclick="closeOrderModal()"><i class="ti ti-x"></i></button></div>
+    <div class="mfield"><label>거래처</label><select id="om-client" onchange="omClientChange()"></select></div>
+    <div class="mfield" id="om-custom-client-wrap" style="display:none"><label>거래처명 직접 입력</label><input type="text" id="om-custom-client" placeholder="거래처명 입력" maxlength="30"/></div>
+    <div class="mfield"><label>오더 항목</label><select id="om-item" onchange="omItemChange()"></select></div>
+    <div class="mfield" id="om-custom-item-wrap" style="display:none"><label>오더 내용 직접 입력</label><input type="text" id="om-custom-item" placeholder="오더 내용 입력" maxlength="60"/></div>
+    <div class="mfield"><label>수량</label><input type="text" id="om-qty" placeholder="예: 2박스, 10kg..." maxlength="20"/></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:12px">
+      <button class="btn" onclick="closeOrderModal()">취소</button>
+      <button class="btn btn-primary" onclick="saveOrder()"><i class="ti ti-plus"></i> 추가</button>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT MANAGE MODAL -->
+<div class="modal-overlay" id="client-mgr-modal">
+  <div class="modal-box">
+    <div class="modal-title">거래처 관리 <button class="icon-btn" onclick="closeClientMgr()"><i class="ti ti-x"></i></button></div>
+    <div id="client-mgr-list"></div>
+    <div class="mgr-add-row">
+      <input type="text" id="client-mgr-input" placeholder="새 거래처명 입력" maxlength="30"/>
+      <button onclick="clientMgrAdd()">추가</button>
+    </div>
+    <div style="display:flex;justify-content:flex-end;margin-top:12px">
+      <button class="btn btn-primary" onclick="closeClientMgr()">완료</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ===================== STORAGE KEYS =====================
+const K={
+  LOGS:'wapp_logs_v1', WORKERS:'wapp_workers_v1', WORKS:'wapp_works_v1',
+  ORDERS:'wapp_orders_v1', CLIENTS:'wapp_clients_v1'
+};
+
+// ===================== DEFAULT DATA =====================
+const DEF_WORKERS=['김철수','이영희','박민준'];
+const DEF_WORKS=['B6','B3','P6','P3','PB600','PB700','BRK700','BRK500','OB700','OB500','B2KG','B10KG','P2kg','P6mm 2kg','P10kg','PB2kg','NE700','ETC'];
+const DEF_CLIENTS=['더스시RV','더스시TH','텐스키친','빌리지소셜','반찬레시피','뚝배기','니뽄푸드','고마트','준퍼시픽','오마이볼','82','컵풀','스틱스','페퍼런치','카페블루밍','고기요','한식','Gday','아지트','서울호퍼스','온그릴'];
+const ORDER_ITEMS=['Chuck 10kg','Chuck 15kg','Chuck 2kg','Topside 4mm 2kg','CBO 2mm 2kg','CBO 6mm 2kg','CBO 10kg','CBO 15kg','OB 2kg','PB 2kg','PB 10kg','LA ribs 5kg','LA ribs 10kg','LA ribs 20kg','Porkbelly','목살 9mm 2kg','소불고기','돼지제육','직접 입력'];
+const DAYS_KR=['일','월','화','수','목','금','토'];
+const DAYS_FULL=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
+
+// ===================== STATE =====================
+let logs=[], workers=[], workTypes=[], orders={}, clients=[];
+let selWorkers=new Set(), editSelWorkers=new Set();
+let editId=null, wlWeekOffset=0, odWeekOffset=0, odStatsMonthOffset=0;
+let mgrMode='', orderModalDate=null;
+
+// ===================== LOAD/SAVE =====================
+function loadAll(){
+  function g(k,def){try{const d=localStorage.getItem(k);return d?JSON.parse(d):def;}catch(e){return def;}}
+  logs=g(K.LOGS,[]);
+  workers=g(K.WORKERS,[...DEF_WORKERS]);
+  workTypes=g(K.WORKS,[...DEF_WORKS]);
+  orders=g(K.ORDERS,{});
+  clients=g(K.CLIENTS,[...DEF_CLIENTS]);
+}
+function saveAll(){
+  try{localStorage.setItem(K.LOGS,JSON.stringify(logs));}catch(e){}
+  try{localStorage.setItem(K.WORKERS,JSON.stringify(workers));}catch(e){}
+  try{localStorage.setItem(K.WORKS,JSON.stringify(workTypes));}catch(e){}
+  try{localStorage.setItem(K.ORDERS,JSON.stringify(orders));}catch(e){}
+  try{localStorage.setItem(K.CLIENTS,JSON.stringify(clients));}catch(e){}
+}
+
+// ===================== UTILS =====================
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+function genId(){return Date.now()+Math.random().toString(36).slice(2,6);}
+function todayStr(){return new Date().toISOString().slice(0,10);}
+function dateKey(d){return d.toISOString().slice(0,10);}
+function fmtShort(d){return`${d.getMonth()+1}/${d.getDate()}`;}
+function fmtDate(s){if(!s)return'';const[y,m,d]=s.split('-');return`${y}.${m}.${d}`;}
+function timeToMins(t){const[h,m]=t.split(':').map(Number);return h*60+m;}
+function minsToHHMM(mins){if(!mins)return'-';const h=Math.floor(mins/60),m=mins%60;return m>0?`${h}시간 ${m}분`:`${h}시간`;}
+function calcDur(s,e){const d=timeToMins(e)-timeToMins(s);return d>0?d:0;}
+function fmtTime(t){if(!t)return'';const[h,m]=t.split(':').map(Number);const ap=h<12?'오전':'오후';const h12=h===0?12:h>12?h-12:h;return`${ap} ${h12}:${String(m).padStart(2,'0')}`;}
+function monthKey(y,m){return`${y}-${String(m+1).padStart(2,'0')}`;}
+
+function getMonday(offset){
+  const d=new Date(),day=d.getDay(),diff=(day===0?-6:1-day);
+  d.setDate(d.getDate()+diff+offset*7);d.setHours(0,0,0,0);return d;
+}
+
+function showToast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.style.opacity='1';
+  setTimeout(()=>t.style.opacity='0',2200);
+}
+
+// ===================== PAGE NAV =====================
+function switchPage(p){
+  document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.main-nav button').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+p).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if(p==='orders'){odRenderWeek();}
+}
+
+// ===================== TIME OPTIONS =====================
+function buildTimeOpts(){
+  const opts=[];
+  for(let h=8;h<=17;h++){for(let m=0;m<60;m+=10){
+    if(h===17&&m>0)break;
+    const ap=h<12?'오전':'오후';const h12=h===0?12:h>12?h-12:h;
+    opts.push({label:`${ap} ${h12}:${String(m).padStart(2,'0')}`,val:`${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`});
+  }}
+  return opts;
+}
+function fillTimeSelect(id,val){
+  const sel=document.getElementById(id);if(!sel)return;
+  const times=buildTimeOpts();
+  sel.innerHTML=times.map(t=>`<option value="${t.val}">${t.label}</option>`).join('');
+  if(val)sel.value=val;
+}
+function fillWorkSelect(id,val){
+  const sel=document.getElementById(id);if(!sel)return;
+  sel.innerHTML=workTypes.map(w=>`<option value="${esc(w)}">${esc(w)}</option>`).join('');
+  if(val)sel.value=val;
+}
+function renderWorkerPills(containerId,selSet){
+  const c=document.getElementById(containerId);if(!c)return;
+  c.innerHTML=workers.map(w=>`<div class="wpill${selSet.has(w)?' sel':''}" onclick="toggleWorker('${containerId}','${w.replace(/'/g,"\\'")}')">${esc(w)}</div>`).join('');
+}
+function toggleWorker(containerId,name){
+  const set=containerId==='worker-pills'?selWorkers:editSelWorkers;
+  set.has(name)?set.delete(name):set.add(name);
+  renderWorkerPills(containerId,set);
+}
+
+// ===================== WORK LOG TABS =====================
+function wlTab(t){
+  document.querySelectorAll('#page-worklog .tab').forEach((b,i)=>b.classList.toggle('active',['input','list','weekly','stats'][i]===t));
+  document.querySelectorAll('#page-worklog .subview').forEach(v=>v.classList.remove('active'));
+  document.getElementById('wl-'+t).classList.add('active');
+  if(t==='list'){wlFillWorkFilter();wlRenderList();}
+  if(t==='weekly')wlRenderWeekly();
+  if(t==='stats'){wlFillStatsMonth();wlRenderStats();}
+}
+
+function wlInitForm(){
+  fillTimeSelect('f-start','08:00');fillTimeSelect('f-end','17:00');
+  fillWorkSelect('f-work');
+  document.getElementById('f-date').value=todayStr();
+  selWorkers=new Set();renderWorkerPills('worker-pills',selWorkers);
+}
+function wlClearForm(){
+  document.getElementById('f-date').value=todayStr();
+  document.getElementById('f-qty').value='';
+  document.getElementById('f-start').value='08:00';
+  document.getElementById('f-end').value='17:00';
+  selWorkers=new Set();renderWorkerPills('worker-pills',selWorkers);
+}
+function wlAddLog(){
+  const date=document.getElementById('f-date').value;
+  const work=document.getElementById('f-work').value;
+  const start=document.getElementById('f-start').value;
+  const end=document.getElementById('f-end').value;
+  const qty=document.getElementById('f-qty').value.trim();
+  const wList=[...selWorkers];
+  if(!date){alert('날짜를 선택해주세요.');return;}
+  if(!wList.length){alert('작업자를 1명 이상 선택해주세요.');return;}
+  if(timeToMins(start)>=timeToMins(end)){alert('종료 시간은 시작 시간 이후여야 합니다.');return;}
+  logs.unshift({id:genId(),date,work,workers:wList,start,end,dur:calcDur(start,end),qty,created:Date.now()});
+  saveAll();wlClearForm();showToast('기록이 추가되었습니다.');
+}
+
+function wlFillWorkFilter(){
+  const sel=document.getElementById('wl-filter-work');const cur=sel.value;
+  sel.innerHTML='<option value="">전체 작업</option>'+workTypes.map(w=>`<option value="${esc(w)}">${esc(w)}</option>`).join('');
+  sel.value=cur;
+}
+function wlRenderList(){
+  const q=document.getElementById('wl-search').value.toLowerCase();
+  const fw=document.getElementById('wl-filter-work').value;
+  const sort=document.getElementById('wl-sort').value;
+  let list=logs.filter(l=>{
+    if(fw&&l.work!==fw)return false;
+    if(q)return l.workers.some(w=>w.toLowerCase().includes(q))||l.work.toLowerCase().includes(q);
+    return true;
+  });
+  if(sort==='newest')list.sort((a,b)=>b.created-a.created);
+  else if(sort==='oldest')list.sort((a,b)=>a.created-b.created);
+  else list.sort((a,b)=>a.workers[0].localeCompare(b.workers[0],'ko'));
+  const c=document.getElementById('wl-log-list');
+  if(!list.length){c.innerHTML='<div class="empty"><i class="ti ti-notes" style="font-size:24px;display:block;margin:0 auto 8px"></i>기록이 없습니다</div>';return;}
+  c.innerHTML=list.map(l=>`
+    <div class="log-item">
+      <div class="log-top">
+        <div><span class="badge badge-work">${esc(l.work)}</span>${l.qty?`<span class="badge badge-qty" style="margin-left:4px">${esc(l.qty)}</span>`:''}</div>
+        <div class="log-actions">
+          <button class="icon-btn" onclick="openEdit('${l.id}')" title="수정"><i class="ti ti-pencil"></i></button>
+          <button class="icon-btn del" onclick="wlDelete('${l.id}')" title="삭제"><i class="ti ti-trash"></i></button>
+        </div>
+      </div>
+      <div class="log-meta">
+        <span class="meta-chip"><i class="ti ti-calendar" style="font-size:12px"></i>${fmtDate(l.date)}</span>
+        <span class="meta-chip"><i class="ti ti-users" style="font-size:12px"></i>${l.workers.map(esc).join(', ')} (${l.workers.length}명)</span>
+        <span class="meta-chip"><i class="ti ti-clock" style="font-size:12px"></i>${fmtTime(l.start)} ~ ${fmtTime(l.end)} (${minsToHHMM(l.dur)})</span>
+      </div>
+    </div>`).join('');
+}
+function wlDelete(id){
+  if(!confirm('이 기록을 삭제하시겠습니까?'))return;
+  logs=logs.filter(l=>l.id!==id);saveAll();wlRenderList();showToast('삭제되었습니다.');
+}
+
+// EDIT
+function openEdit(id){
+  const l=logs.find(x=>x.id===id);if(!l)return;
+  editId=id;
+  document.getElementById('e-date').value=l.date;
+  fillWorkSelect('e-work',l.work);
+  fillTimeSelect('e-start',l.start);
+  fillTimeSelect('e-end',l.end);
+  document.getElementById('e-qty').value=l.qty||'';
+  editSelWorkers=new Set(l.workers);
+  renderWorkerPills('edit-worker-pills',editSelWorkers);
+  document.getElementById('edit-modal').classList.add('open');
+}
+function closeEdit(){document.getElementById('edit-modal').classList.remove('open');editId=null;}
+function saveEdit(){
+  const l=logs.find(x=>x.id===editId);if(!l)return;
+  const start=document.getElementById('e-start').value;
+  const end=document.getElementById('e-end').value;
+  const wList=[...editSelWorkers];
+  if(!wList.length){alert('작업자를 1명 이상 선택해주세요.');return;}
+  if(timeToMins(start)>=timeToMins(end)){alert('종료 시간은 시작 시간 이후여야 합니다.');return;}
+  l.date=document.getElementById('e-date').value;l.work=document.getElementById('e-work').value;
+  l.start=start;l.end=end;l.dur=calcDur(start,end);
+  l.qty=document.getElementById('e-qty').value.trim();l.workers=wList;
+  saveAll();closeEdit();wlRenderList();showToast('수정되었습니다.');
+}
+
+// WEEKLY
+function wlShiftWeek(d){wlWeekOffset+=d;wlRenderWeekly();}
+function wlGoToday(){wlWeekOffset=0;wlRenderWeekly();}
+function wlRenderWeekly(){
+  const monday=getMonday(wlWeekOffset);
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  document.getElementById('wl-week-label').textContent=`${fmtShort(monday)} ~ ${fmtShort(sunday)}`;
+  const todayKey=dateKey(new Date());
+  const grid=document.getElementById('wl-weekly-grid');grid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    const dk=dateKey(d);
+    const dayLogs=logs.filter(l=>l.date===dk).sort((a,b)=>a.start.localeCompare(b.start));
+    const isToday=dk===todayKey,isSun=i===6,isSat=i===5;
+    const sec=document.createElement('div');sec.className='day-section';
+    const hc='day-section-head'+(isToday?' today':'')+(isSun?' sunday':'')+(isSat?' saturday':'');
+    const totalMins=dayLogs.reduce((s,l)=>s+(l.dur||0),0);
+    sec.innerHTML=`
+      <div class="${hc}">
+        <span class="dsday">${DAYS_FULL[d.getDay()]} (${fmtShort(d)})</span>
+        <span class="dscount">${dayLogs.length?`${dayLogs.length}건 · ${minsToHHMM(totalMins)}`:''}</span>
+      </div>
+      <div class="day-section-body">
+        ${dayLogs.length?dayLogs.map(l=>`
+          <div class="day-log-row">
+            <span class="badge badge-work">${esc(l.work)}</span>
+            <span style="color:var(--text2);margin-left:4px">${fmtTime(l.start)}~${fmtTime(l.end)}</span>
+            · <span>${l.workers.map(esc).join(', ')}</span>
+            ${l.qty?`· <span class="badge badge-qty">${esc(l.qty)}</span>`:''}
+          </div>`).join(''):'<div style="padding:6px 0;font-size:12px;color:var(--text3)">기록 없음</div>'}
+      </div>`;
+    grid.appendChild(sec);
+  }
+}
+
+// STATS
+function wlFillStatsMonth(){
+  const months=new Set();logs.forEach(l=>{if(l.date)months.add(l.date.slice(0,7));});
+  const sorted=[...months].sort().reverse();
+  const sel=document.getElementById('wl-stats-month');const cur=sel.value;
+  sel.innerHTML='<option value="all">전체</option>'+sorted.map(m=>`<option value="${m}">${m.replace('-','년 ')}월</option>`).join('');
+  if(cur)sel.value=cur;
+}
+function wlRenderStats(){
+  const mf=document.getElementById('wl-stats-month').value;
+  const filtered=mf==='all'?logs:logs.filter(l=>l.date&&l.date.startsWith(mf));
+  const total=filtered.length;
+  const totalMins=filtered.reduce((s,l)=>s+(l.dur||0),0);
+  const avg=total?Math.round(totalMins/total):0;
+  document.getElementById('wl-stat-cards').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${total}</div><div class="stat-lbl">총 작업 건수</div></div>
+    <div class="stat-card"><div class="stat-num" style="font-size:15px">${minsToHHMM(totalMins)}</div><div class="stat-lbl">총 작업 시간</div></div>
+    <div class="stat-card"><div class="stat-num" style="font-size:15px">${minsToHHMM(avg)}</div><div class="stat-lbl">건당 평균</div></div>`;
+  // work stats
+  const wm={};filtered.forEach(l=>{if(!wm[l.work])wm[l.work]={count:0,mins:0};wm[l.work].count++;wm[l.work].mins+=l.dur||0;});
+  const ws=Object.entries(wm).sort((a,b)=>b[1].mins-a[1].mins);
+  const maxWM=ws.length?ws[0][1].mins:1;
+  document.getElementById('wl-work-tbody').innerHTML=ws.length?ws.map(([w,s])=>{
+    const pct=Math.round(s.mins/maxWM*100);
+    return`<tr><td><span class="badge badge-work">${esc(w)}</span></td><td>${s.count}건</td><td>${minsToHHMM(s.mins)}</td><td>${minsToHHMM(Math.round(s.mins/s.count))}</td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text3);min-width:28px;text-align:right">${totalMins?Math.round(s.mins/totalMins*100):0}%</span></div></td></tr>`;
+  }).join(''):`<tr><td colspan="5" class="empty">데이터 없음</td></tr>`;
+  // worker stats
+  const wrm={};filtered.forEach(l=>{l.workers.forEach(w=>{if(!wrm[w])wrm[w]={count:0,mins:0,qty:[]};wrm[w].count++;wrm[w].mins+=l.dur||0;if(l.qty)wrm[w].qty.push(l.qty);});});
+  const wrs=Object.entries(wrm).sort((a,b)=>b[1].mins-a[1].mins);
+  document.getElementById('wl-worker-tbody').innerHTML=wrs.length?wrs.map(([w,s])=>`
+    <tr><td>${esc(w)}</td><td>${s.count}건</td><td>${minsToHHMM(s.mins)}</td><td>${minsToHHMM(Math.round(s.mins/s.count))}</td>
+    <td style="font-size:11px;color:var(--text2)">${s.qty.length?s.qty.slice(0,2).join(', ')+(s.qty.length>2?'...':''):'-'}</td></tr>`
+  ).join(''):`<tr><td colspan="5" class="empty">데이터 없음</td></tr>`;
+  // day stats
+  const dm={};filtered.forEach(l=>{if(!l.date)return;const dow=new Date(l.date+'T00:00:00').getDay();if(!dm[dow])dm[dow]={count:0,mins:0};dm[dow].count++;dm[dow].mins+=l.dur||0;});
+  const maxDM=Math.max(...Object.values(dm).map(d=>d.mins),1);
+  document.getElementById('wl-day-tbody').innerHTML=[1,2,3,4,5,6,0].map(dow=>{
+    const s=dm[dow]||{count:0,mins:0};const pct=Math.round(s.mins/maxDM*100);
+    return`<tr><td>${DAYS_FULL[dow]}</td><td>${s.count}건</td><td>${s.mins?minsToHHMM(s.mins):'-'}</td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div></div></td></tr>`;
+  }).join('');
+}
+
+// ===================== MANAGE MODAL =====================
+function openMgr(mode){
+  mgrMode=mode;
+  const titles={worker:'작업자 관리',work:'작업 종류 관리'};
+  document.getElementById('mgr-title').innerHTML=titles[mode]+` <button class="icon-btn" onclick="closeMgr()"><i class="ti ti-x"></i></button>`;
+  document.getElementById('mgr-input').value='';
+  document.getElementById('mgr-input').placeholder=mode==='worker'?'새 작업자 이름':'새 작업 종류';
+  renderMgrList();
+  document.getElementById('mgr-modal').classList.add('open');
+}
+function closeMgr(){
+  document.getElementById('mgr-modal').classList.remove('open');
+  fillWorkSelect('f-work');renderWorkerPills('worker-pills',selWorkers);saveAll();
+}
+function renderMgrList(){
+  const arr=mgrMode==='worker'?workers:workTypes;
+  document.getElementById('mgr-list').innerHTML=arr.length?arr.map((item,i)=>`
+    <div class="mgr-item-row"><span>${esc(item)}</span>
+    <button class="icon-btn del" onclick="mgrRemove(${i})" title="삭제"><i class="ti ti-trash" style="font-size:13px"></i></button></div>`).join('')
+  :'<div style="padding:8px 0;font-size:13px;color:var(--text3)">항목이 없습니다</div>';
+}
+function mgrAdd(){
+  const val=document.getElementById('mgr-input').value.trim();if(!val)return;
+  const arr=mgrMode==='worker'?workers:workTypes;
+  if(arr.includes(val)){alert('이미 있는 항목입니다.');return;}
+  arr.push(val);document.getElementById('mgr-input').value='';renderMgrList();
+}
+function mgrRemove(idx){const arr=mgrMode==='worker'?workers:workTypes;arr.splice(idx,1);renderMgrList();}
+document.getElementById('mgr-input').addEventListener('keydown',e=>{if(e.key==='Enter')mgrAdd();});
+
+// ===================== ORDER DIARY =====================
+function odTab(t){
+  document.querySelectorAll('#page-orders .tab').forEach((b,i)=>b.classList.toggle('active',['diary','stats','compare'][i]===t));
+  document.querySelectorAll('#page-orders .subview').forEach(v=>v.classList.remove('active'));
+  document.getElementById('od-'+t).classList.add('active');
+  if(t==='diary')odRenderWeek();
+  if(t==='stats')odRenderStats();
+  if(t==='compare')odFillCompareMonths();
+}
+function odShiftWeek(d){odWeekOffset+=d;odRenderWeek();}
+function odGoToday(){odWeekOffset=0;odRenderWeek();}
+function odRenderWeek(){
+  const monday=getMonday(odWeekOffset);
+  const sunday=new Date(monday);sunday.setDate(monday.getDate()+6);
+  document.getElementById('od-week-label').textContent=`${fmtShort(monday)} ~ ${fmtShort(sunday)}`;
+  const todayKey=dateKey(new Date());
+  const grid=document.getElementById('od-week-grid');grid.innerHTML='';
+  for(let i=0;i<7;i++){
+    const d=new Date(monday);d.setDate(monday.getDate()+i);
+    const dk=dateKey(d);
+    const dayOrders=orders[dk]||[];
+    const isToday=dk===todayKey,isSun=i===6,isSat=i===5;
+    const sec=document.createElement('div');sec.className='day-section';
+    const hc='day-section-head'+(isToday?' today':'')+(isSun?' sunday':'')+(isSat?' saturday':'');
+    const chips=dayOrders.map((o,idx)=>`
+      <div class="order-chip">
+        <span><strong>${esc(o.client)}</strong> · ${esc(o.item)}${o.qty?' × '+esc(o.qty):''}</span>
+        <button onclick="odDeleteOrder('${dk}',${idx})" aria-label="삭제"><i class="ti ti-x" style="font-size:10px"></i></button>
+      </div>`).join('');
+    const label=`${DAYS_FULL[d.getDay()]} (${d.getMonth()+1}/${d.getDate()})`;
+    sec.innerHTML=`
+      <div class="${hc}">
+        <span class="dsday">${DAYS_FULL[d.getDay()]} (${fmtShort(d)})</span>
+        <span class="dscount">${dayOrders.length?dayOrders.length+'건':''}</span>
+      </div>
+      <div class="day-order-body">
+        ${chips}
+        <button class="add-btn-sm" onclick="openOrderModal('${dk}','${label}')"><i class="ti ti-plus" style="font-size:11px"></i> 추가</button>
+      </div>`;
+    grid.appendChild(sec);
+  }
+}
+function odDeleteOrder(dk,idx){
+  if(!orders[dk])return;
+  orders[dk].splice(idx,1);
+  if(!orders[dk].length)delete orders[dk];
+  saveAll();odRenderWeek();
+}
+
+// ORDER MODAL
+function openOrderModal(dk,label){
+  orderModalDate=dk;
+  document.getElementById('order-modal-title').textContent=label+' 오더 추가';
+  document.getElementById('om-client').innerHTML=clients.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('')+'<option value="__custom__">직접 입력</option>';
+  document.getElementById('om-item').innerHTML=ORDER_ITEMS.map(it=>`<option value="${esc(it)}">${esc(it)}</option>`).join('');
+  document.getElementById('om-qty').value='';
+  document.getElementById('om-custom-client').value='';
+  document.getElementById('om-custom-item').value='';
+  document.getElementById('om-custom-client-wrap').style.display='none';
+  document.getElementById('om-custom-item-wrap').style.display='none';
+  document.getElementById('order-modal').classList.add('open');
+}
+function closeOrderModal(){document.getElementById('order-modal').classList.remove('open');}
+function omClientChange(){document.getElementById('om-custom-client-wrap').style.display=document.getElementById('om-client').value==='__custom__'?'':'none';}
+function omItemChange(){document.getElementById('om-custom-item-wrap').style.display=document.getElementById('om-item').value==='직접 입력'?'':'none';}
+function saveOrder(){
+  let client=document.getElementById('om-client').value;
+  if(client==='__custom__'){client=document.getElementById('om-custom-client').value.trim();if(!client){alert('거래처명을 입력해주세요.');return;}}
+  let item=document.getElementById('om-item').value;
+  if(item==='직접 입력'){item=document.getElementById('om-custom-item').value.trim();if(!item){alert('오더 내용을 입력해주세요.');return;}}
+  const qty=document.getElementById('om-qty').value.trim();
+  if(!orders[orderModalDate])orders[orderModalDate]=[];
+  orders[orderModalDate].push({client,item,qty});
+  saveAll();closeOrderModal();odRenderWeek();showToast('오더가 추가되었습니다.');
+}
+
+// CLIENT MANAGE
+function openClientMgr(){renderClientMgrList();document.getElementById('client-mgr-modal').classList.add('open');}
+function closeClientMgr(){document.getElementById('client-mgr-modal').classList.remove('open');saveAll();odRenderWeek();}
+function renderClientMgrList(){
+  document.getElementById('client-mgr-list').innerHTML=clients.map((c,i)=>`
+    <div class="mgr-item-row"><span>${esc(c)}</span>
+    <button class="icon-btn del" onclick="clientMgrRemove(${i})"><i class="ti ti-trash" style="font-size:13px"></i></button></div>`).join('');
+}
+function clientMgrAdd(){
+  const input=document.getElementById('client-mgr-input');
+  const name=input.value.trim();if(!name)return;
+  if(clients.includes(name)){alert('이미 있는 거래처입니다.');return;}
+  clients.push(name);input.value='';renderClientMgrList();
+}
+function clientMgrRemove(idx){clients.splice(idx,1);renderClientMgrList();}
+document.getElementById('client-mgr-input').addEventListener('keydown',e=>{if(e.key==='Enter')clientMgrAdd();});
+
+// ORDER STATS
+function odGetOrdersForMonth(year,month){
+  const mk=monthKey(year,month);const result=[];
+  Object.keys(orders).forEach(dk=>{if(dk.startsWith(mk))(orders[dk]||[]).forEach(o=>result.push(o));});
+  return result;
+}
+function odShiftStatsMonth(d){odStatsMonthOffset+=d;odRenderStats();}
+function odRenderStats(){
+  const now=new Date();now.setMonth(now.getMonth()+odStatsMonthOffset);
+  const year=now.getFullYear(),month=now.getMonth();
+  const prevY=month===0?year-1:year,prevM=month===0?11:month-1;
+  document.getElementById('od-stats-month-label').textContent=`${year}년 ${month+1}월`;
+  const cur=odGetOrdersForMonth(year,month),prev=odGetOrdersForMonth(prevY,prevM);
+  const curTotal=cur.length,prevTotal=prev.length;
+  const curClients=new Set(cur.map(o=>o.client)).size;
+  const change=prevTotal===0?null:Math.round((curTotal-prevTotal)/prevTotal*100);
+  const changeTxt=prevTotal===0?'-':(change>0?`+${change}%`:change===0?'0%':`${change}%`);
+  const changeClass=prevTotal===0?'same':change>0?'badge-up':change<0?'badge-down':'badge-same';
+  document.getElementById('od-stat-cards').innerHTML=`
+    <div class="stat-card"><div class="stat-num">${curTotal}</div><div class="stat-lbl">총 오더<br><span class="badge ${changeClass}" style="font-size:11px">${changeTxt}</span></div></div>
+    <div class="stat-card"><div class="stat-num">${curClients}</div><div class="stat-lbl">거래처 수</div></div>
+    <div class="stat-card"><div class="stat-num">${prevTotal}</div><div class="stat-lbl">전월 오더</div></div>`;
+  const cc={};cur.forEach(o=>{cc[o.client]=(cc[o.client]||0)+1;});
+  const pc={};prev.forEach(o=>{pc[o.client]=(pc[o.client]||0)+1;});
+  const sorted=Object.entries(cc).sort((a,b)=>b[1]-a[1]);
+  const maxV=sorted.length?sorted[0][1]:1;
+  const tbody=document.getElementById('od-client-tbody');
+  if(!sorted.length){tbody.innerHTML='<tr><td colspan="4" class="empty">이 달의 오더가 없습니다</td></tr>';return;}
+  tbody.innerHTML=sorted.map(([client,cnt])=>{
+    const pct=Math.round(cnt/maxV*100);
+    const p=pc[client]||0,diff=cnt-p;
+    const diffTxt=p===0&&cnt>0?'신규':diff>0?`+${diff}`:diff===0?'±0':`${diff}`;
+    const diffClass=p===0&&cnt>0?'badge-up':diff>0?'badge-up':diff<0?'badge-down':'badge-same';
+    return`<tr><td>${esc(client)}</td><td style="font-weight:500">${cnt}</td>
+    <td><div class="bar-wrap"><div class="bar-bg"><div class="bar-fill" style="width:${pct}%"></div></div><span style="font-size:11px;color:var(--text3);min-width:28px;text-align:right">${curTotal?Math.round(cnt/curTotal*100):0}%</span></div></td>
+    <td style="text-align:right"><span class="badge ${diffClass}">${diffTxt}</span></td></tr>`;
+  }).join('');
+}
+
+// COMPARE
+function odGetAvailableMonths(){
+  const months=new Set();Object.keys(orders).forEach(dk=>months.add(dk.slice(0,7)));
+  const now=new Date();
+  for(let i=0;i<6;i++){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.add(monthKey(d.getFullYear(),d.getMonth()));}
+  return[...months].sort().reverse();
+}
+function odFillCompareMonths(){
+  const months=odGetAvailableMonths();
+  const opts=months.map(m=>`<option value="${m}">${m.replace('-','년 ')}월</option>`).join('');
+  document.getElementById('cmp-a').innerHTML=opts;
+  document.getElementById('cmp-b').innerHTML=opts;
+  if(months.length>1)document.getElementById('cmp-b').selectedIndex=1;
+  odRenderCompare();
+}
+function odRenderCompare(){
+  const aKey=document.getElementById('cmp-a').value,bKey=document.getElementById('cmp-b').value;
+  if(!aKey||!bKey)return;
+  const[aY,aM]=aKey.split('-').map(Number),[bY,bM]=bKey.split('-').map(Number);
+  const aO=odGetOrdersForMonth(aY,aM-1),bO=odGetOrdersForMonth(bY,bM-1);
+  function byClient(arr){const r={};arr.forEach(o=>{r[o.client]=(r[o.client]||0)+1;});return r;}
+  function byItem(arr){const r={};arr.forEach(o=>{r[o.item]=(r[o.item]||0)+1;});return r;}
+  const aC=byClient(aO),bC=byClient(bO),aI=byItem(aO),bI=byItem(bO);
+  const allClients=[...new Set([...Object.keys(aC),...Object.keys(bC)])].sort();
+  const allItems=[...new Set([...Object.keys(aI),...Object.keys(bI)])].sort();
+  const aLabel=`${aY}년 ${aM}월`,bLabel=`${bY}년 ${bM}월`;
+  function diffBadge(a,b){const d=a-b;if(d===0)return`<span class="badge badge-same">±0</span>`;return`<span class="badge ${d>0?'badge-up':'badge-down'}">${d>0?'+':''}${d}</span>`;}
+  const totalDiff=aO.length-bO.length;
+  const totalClass=totalDiff>0?'badge-up':totalDiff<0?'badge-down':'badge-same';
+  document.getElementById('od-compare-content').innerHTML=`
+    <div class="stat-cards">
+      <div class="stat-card"><div class="stat-num">${aO.length}</div><div class="stat-lbl">${aLabel}</div></div>
+      <div class="stat-card"><div class="stat-num">${bO.length}</div><div class="stat-lbl">${bLabel}</div></div>
+      <div class="stat-card"><div class="stat-num"><span class="badge ${totalClass}" style="font-size:16px;padding:3px 10px">${totalDiff>0?'+':''}${totalDiff}</span></div><div class="stat-lbl">오더 증감</div></div>
+    </div>
+    <div class="section-card" style="margin-bottom:.85rem">
+      <div class="section-head" style="display:flex;justify-content:space-between">거래처별 비교
+        <span style="font-size:11px;color:var(--text3);display:flex;gap:14px"><span>${aLabel}</span><span>증감</span><span>${bLabel}</span></span>
+      </div>
+      ${allClients.map(c=>`
+        <div class="compare-row"><span style="color:var(--text2);flex:1">${esc(c)}</span>
+        <span style="display:flex;align-items:center;gap:10px">
+          <span style="min-width:24px;text-align:right;font-weight:500">${aC[c]||0}</span>
+          ${diffBadge(aC[c]||0,bC[c]||0)}
+          <span style="min-width:24px;text-align:right;color:var(--text2)">${bC[c]||0}</span>
+        </span></div>`).join('')||'<div class="empty">데이터가 없습니다</div>'}
+    </div>
+    <div class="section-card">
+      <div class="section-head" style="display:flex;justify-content:space-between">오더 항목별 비교
+        <span style="font-size:11px;color:var(--text3);display:flex;gap:14px"><span>${aLabel}</span><span>증감</span><span>${bLabel}</span></span>
+      </div>
+      ${allItems.map(it=>`
+        <div class="compare-row"><span style="color:var(--text2);flex:1">${esc(it)}</span>
+        <span style="display:flex;align-items:center;gap:10px">
+          <span style="min-width:24px;text-align:right;font-weight:500">${aI[it]||0}</span>
+          ${diffBadge(aI[it]||0,bI[it]||0)}
+          <span style="min-width:24px;text-align:right;color:var(--text2)">${bI[it]||0}</span>
+        </span></div>`).join('')||'<div class="empty">데이터가 없습니다</div>'}
+    </div>`;
+}
+
+// ===================== INIT =====================
+loadAll();
+wlInitForm();
+odRenderWeek();
+</script>
+</body>
+</html>
